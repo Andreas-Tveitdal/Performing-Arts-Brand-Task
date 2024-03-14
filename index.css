@@ -18,6 +18,10 @@ canvas {
     background-size: 100% 100%;
 }
 
+p {
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+}
+
 @keyframes fade-in {
     0% {
         opacity: 1;
@@ -35,7 +39,7 @@ canvas {
     }
     100% {
         opacity: 1;
-        visibility: visible:
+        visibility: visible;
     }
 }
 
@@ -44,6 +48,10 @@ canvas {
     margin: 0px;
     padding: 0px;
     position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     top: 0px;
     left: 0px;
     width: 100%;
@@ -51,6 +59,33 @@ canvas {
     opacity: 1;
     visibility: visible;
     background-color: black;
+}
+#deathtext {
+    border: 0px;
+    margin: 0px;
+    margin-bottom: 1em;
+    padding: 0px;
+    opacity: 0;
+    visibility: hidden;
+    color: red;
+    text-align: center;
+    font-size: 7em;
+}
+#deathbutton {
+    all: unset;
+    border: solid 0px darkred;
+    margin: 0px;
+    margin-top: 5em;
+    padding: 0px;
+    width: 20%;
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+    color: darkred;
+    text-align: center;
+    text-decoration-line: underline;
+    vertical-align: top;
+    font-size: 2em;
 }
 
 .apply-fade-in {

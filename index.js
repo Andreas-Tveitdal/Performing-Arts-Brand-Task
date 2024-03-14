@@ -1,6 +1,8 @@
 // "use strict";
 
 const deathscreendiv = document.getElementById("deathscreen");
+const deathscreentext = document.getElementById("deathtext");
+const deathscreenbutton = document.getElementById("deathbutton");
 deathscreendiv.style.animation = "fade-in 2s ease 1s forwards";
 const body = document.getElementById("body");
 const canvas = document.getElementById("canvas");
@@ -21,13 +23,14 @@ const hurtSFX = new Audio("./hurtSFX.wav");
 
 const GAME_CONFIG_MAX_PROJECTILECOUNT = 10000;
 const GAME_CONFIG_SPLASHTEXT_DURATION = 30;
-const GAME_CONFIG_PLAYERPROJECTILES = true;
+const GAME_CONFIG_PLAYERPROJECTILES = false;
+const GAME_CONFIG_DELTATIME_MODIFIER = 10;
 
 const PLAYER_CONFIG_WIDTH = 50;
 const PLAYER_CONFIG_HEIGHT = 50;
-const PLAYER_CONFIG_HEALTH = 10;
+const PLAYER_CONFIG_HEALTH = 8;
 const PLAYER_CONFIG_SPEED = 3;
-const PLAYER_CONFIG_DAMAGE = 2;
+const PLAYER_CONFIG_DAMAGE = 1;
 const PLAYER_START_X = (canvas.width - PLAYER_CONFIG_WIDTH) / 2;
 const PLAYER_START_Y = (canvas.width - PLAYER_CONFIG_HEIGHT) / 2;
 const PLAYER_PROJECTILE_WIDTH = 5;
@@ -43,9 +46,9 @@ const PLAYER_HEALTHBAR_H = canvas.height / 100;
 
 const ENEMY_CONFIG_WIDTH = 50;
 const ENEMY_CONFIG_HEIGHT = 50;
-const ENEMY_CONFIG_HEALTH = 3000;
-const ENEMY_CONFIG_SPEED = 3;
-const ENEMY_CONFIG_DAMAGE = 2;
+const ENEMY_CONFIG_HEALTH = 10000;
+const ENEMY_CONFIG_SPEED = 20;
+const ENEMY_CONFIG_DAMAGE = 1;
 const ENEMY_START_X = (canvas.width - ENEMY_CONFIG_WIDTH) / 2;
 const ENEMY_START_Y = (canvas.width - ENEMY_CONFIG_HEIGHT) / 10;
 const ENEMY_PROJECTILE_WIDTH = 5;
@@ -59,40 +62,32 @@ const ENEMY_HEALTHBAR_Y = canvas.height / 50;
 const ENEMY_HEALTHBAR_W = canvas.width - 2 * ENEMY_HEALTHBAR_X;
 const ENEMY_HEALTHBAR_H = canvas.height / 150;
 
-const DELTATIME_MODIFIER = 10;
 
-const isAlive = (function() {return this.hp > 0;})
-const player = {
+let player = {
     xPos: PLAYER_START_X,
     yPos: PLAYER_START_Y,
     width: PLAYER_CONFIG_WIDTH,
     height: PLAYER_CONFIG_HEIGHT,
     hp: PLAYER_CONFIG_HEALTH,
-    state: {
-        alive: isAlive,
-    }
+    state: {}
 };
-const mainEnemy = {
+let mainEnemy = {
     xPos: ENEMY_START_X,
     yPos: ENEMY_START_Y,
     width: ENEMY_CONFIG_WIDTH,
     height: ENEMY_CONFIG_HEIGHT,
     hp: ENEMY_CONFIG_HEALTH,
-    state: {
-        alive: isAlive,
-    }
+    state: {}
 };
-const enemyProjectiles = [];
-const playerProjectiles = [];
-const objectHitSplashTexts = [];
+let enemyProjectiles = [];
+let playerProjectiles = [];
+let objectHitSplashTexts = [];
 
 function removeFromList(item, list) {
     const itemIndex = list.indexOf(item);
     if (itemIndex !== -1) {
         list.splice(itemIndex, 1);
     }
-}
-function endGame() {
 }
 
 function changeProjectiles(projectile, _, time) {
@@ -165,15 +160,6 @@ function drawObject(object) {
     ctx.fillStyle = "blue";
     ctx.fillRect(object.xPos, object.yPos, object.width, object.height);
 }
-function objectStrafeHorizontally(object) {
-    if (!object.state.changeX) object.state.changeX = 1;
-    if (object.xPos > 500) {
-        object.state.changeX = -1 * deltaTime;
-    } else if (object.xPos < 100) {
-        object.state.changeX = 1 * deltaTime;
-    }
-    object.xPos += object.state.changeX;
-}
 function playerInstantiateProjectiles(object) {
     if (!object.state.cooldown) object.state.cooldown = 0;
     if (object.state.cooldown < PLAYER_PROJECTILE_COOLDOWN) {
@@ -217,6 +203,15 @@ function circleAttack(object) {
         ));
     }
 }
+function enemyMovementHorizontally(object) {
+    if (!object.state.changeX) object.state.changeX = ENEMY_CONFIG_SPEED * deltaTime;
+    if (object.xPos > canvas.width * 0.8) {
+        object.state.changeX = -ENEMY_CONFIG_SPEED * deltaTime;
+    } else if (object.xPos < canvas.width * 0.2) {
+        object.state.changeX = ENEMY_CONFIG_SPEED * deltaTime;
+    }
+    object.xPos += object.state.changeX;
+}
 
 function handleProjectileHit(object, projectilesCanHurt) {
     const projectileHit = objectHitByProjectile(object, projectilesCanHurt);
@@ -254,7 +249,7 @@ function handlePlayerLife(object) {
 function handleMainEnemyAttacks(object) {
     if (!object.state.circleAttack) object.state.circleAttack = {};
     if (!object.state.circleAttack.delay) object.state.circleAttack.delay = 0;
-    if (object.state.circleAttack.delay > 100) {
+    if (object.state.circleAttack.delay > 40) {
         circleAttack(object);
         object.state.circleAttack.delay = 0;
     }
@@ -280,26 +275,31 @@ function handleMainEnemyLife(object) {
     }
 }
 function handleKeyPresses(keyspressed) {
+    let movement = null;
     if (keyspressed.w || keyspressed.ArrowUp) {
-        player.yPos += -PLAYER_CONFIG_SPEED * deltaTime;
+        movement = player.yPos + -PLAYER_CONFIG_SPEED * deltaTime;
+        if (movement >= 0) player.yPos = movement;
     }
     if (keyspressed.a || keyspressed.ArrowLeft) {
-        player.xPos += -PLAYER_CONFIG_SPEED * deltaTime;
+        movement = player.xPos + -PLAYER_CONFIG_SPEED * deltaTime;
+        if (movement >= 0) player.xPos = movement;
     }
     if (keyspressed.s || keyspressed.ArrowDown) {
-        player.yPos += PLAYER_CONFIG_SPEED * deltaTime;
+        movement = player.yPos + PLAYER_CONFIG_SPEED * deltaTime;
+        if (movement <= canvas.height - PLAYER_CONFIG_HEIGHT) player.yPos = movement;
     }
     if (keyspressed.d || keyspressed.ArrowRight) {
-        player.xPos += PLAYER_CONFIG_SPEED * deltaTime;
+        movement = player.xPos + PLAYER_CONFIG_SPEED * deltaTime;
+        if (movement <= canvas.width - PLAYER_CONFIG_WIDTH) player.xPos = movement;
     }
 }
 function update(renderTimestamp) {
     if (!lastTimestamp) lastTimestamp = renderTimestamp;
-    deltaTime = (renderTimestamp - lastTimestamp) / DELTATIME_MODIFIER;
+    deltaTime = (renderTimestamp - lastTimestamp) / GAME_CONFIG_DELTATIME_MODIFIER;
     lastTimestamp = renderTimestamp;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     handleKeyPresses(inputKeysPressed);
-    objectStrafeHorizontally(mainEnemy);
+    enemyMovementHorizontally(mainEnemy);
     updateProjectiles([
         changeProjectiles,
         removeRedundantProjectiles,
@@ -314,7 +314,11 @@ function update(renderTimestamp) {
 
     drawObjectHitSplashText(objectHitSplashTexts);
     if (gameRunning) { window.requestAnimationFrame(update); }
-    else { deathscreendiv.style.animation = "fade-out 0.5s ease forwards, 0s"; }
+    else {
+        deathscreendiv.style.animation = "fade-out 0.5s ease 0s forwards";
+        deathscreentext.style.animation = "fade-out 0.5s ease 0s forwards";
+        deathscreenbutton.style.animation = "fade-out 0.5s ease 0s forwards";
+    }
 }
 
 let deltaTime = null;
@@ -322,11 +326,40 @@ let lastTimestamp = null;
 let gameRunning = true;
 window.requestAnimationFrame(update);
 
-const inputKeysPressed = {};
+let inputKeysPressed = {};
 document.addEventListener("keydown", (event) => {
     inputKeysPressed[event.key] = true;
 });
 document.addEventListener("keyup", (event) => {
     inputKeysPressed[event.key] = false;
+});
+deathscreenbutton.addEventListener("click", (event) => {
+    deathscreendiv.style.animation = "fade-in 2s ease 1s forwards";
+    deathscreentext.style.animation = "fade-in 0s ease 0s forwards";
+    deathscreenbutton.style.animation = "fade-in 0s ease 0s forwards";
+    player = {
+        xPos: PLAYER_START_X,
+        yPos: PLAYER_START_Y,
+        width: PLAYER_CONFIG_WIDTH,
+        height: PLAYER_CONFIG_HEIGHT,
+        hp: PLAYER_CONFIG_HEALTH,
+        state: {}
+    };
+    mainEnemy = {
+        xPos: ENEMY_START_X,
+        yPos: ENEMY_START_Y,
+        width: ENEMY_CONFIG_WIDTH,
+        height: ENEMY_CONFIG_HEIGHT,
+        hp: ENEMY_CONFIG_HEALTH,
+        state: {}
+    };
+    enemyProjectiles = [];
+    playerProjectiles = [];
+    objectHitSplashTexts = [];
+    deltaTime = null;
+    lastTimestamp = null;
+    gameRunning = true;
+    window.requestAnimationFrame(update);
+    inputKeysPressed = {};
 });
 
