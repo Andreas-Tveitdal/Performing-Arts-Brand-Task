@@ -55,10 +55,13 @@ const playerHurtSFX = new Audio("hurtSFX.wav");
 const playerHitSFX = new Audio("hitSFX.wav");
 const backgroundAudioFantasy = new Audio("background_fantasy.wav");
 const backgroundAudioChiptune = new Audio("background_chiptune.wav");
-backgroundAudioFantasy.loop = true;
-backgroundAudioChiptune.loop = true;
+const gameAudio = backgroundAudioChiptune;
 let audioState = 10;
 const audioOptions = [ 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 ];
+gameAudio.addEventListener("ended", function() {
+    this.currentTime = 0;
+    this.play();
+});
 // end initialization }}}
 
 // TODO: ADD TEXTURE FOR ENEMY
@@ -70,7 +73,6 @@ const GAME_CONFIG_SPLASHTEXT_DURATION = 30;
 const GAME_CONFIG_PLAYERPROJECTILES = true;
 const GAME_CONFIG_DELTATIME_MODIFIER = 10;
 const GAME_CONFIG_DISPLAY_HITBOX = false;
-const GAME_CONFIG_BACKGROUND_AUDIO = backgroundAudioChiptune;
 
 const PLAYER_CONFIG_HEALTH = 14;
 const PLAYER_CONFIG_SPEED = 2.5;
@@ -466,8 +468,6 @@ function updateGame(renderTimestamp) {
     deltaTime = (renderTimestamp - lastTimestamp) / GAME_CONFIG_DELTATIME_MODIFIER;
     lastTimestamp = renderTimestamp;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "green";
-    ctx.fillRect(canvas.width * 0.1, canvas.height * 0.1, canvas.width * 0.8, canvas.height * 0.3);
     handleKeyPresses(inputKeysPressed);
     updateProjectiles([
         changeProjectiles,
@@ -484,7 +484,7 @@ function updateGame(renderTimestamp) {
     drawObjectHitSplashText(objectHitSplashTexts);
     if (gameRunning) { window.requestAnimationFrame(updateGame); }
     else {
-        GAME_CONFIG_BACKGROUND_AUDIO.pause();
+        gameAudio.pause();
         if (gameLost) {
             deathscreendiv.style.animation = "fade-out 0.5s ease 0s forwards";
             deathscreentext.style.animation = "fade-out 0.5s ease 0s forwards";
@@ -498,7 +498,6 @@ function updateGame(renderTimestamp) {
 }
 
 // start game-variables {{{
-GAME_CONFIG_BACKGROUND_AUDIO.play();
 let player = createPlayerObject();
 let mainEnemy = createEnemyObject();
 let enemyProjectiles = [];
@@ -511,7 +510,7 @@ let gameRunning = false;
 let gameLost = true;
 let firstGame = true;
 function startGame() {
-    GAME_CONFIG_BACKGROUND_AUDIO.play();
+    gameAudio.play();
     if (gameLost) {
         deathscreendiv.style.animation = "fade-in 2s ease 1s forwards";
         if (!firstGame) {
@@ -542,19 +541,17 @@ function startGame() {
 // start player-movement-event-listeners {{{
 document.addEventListener("keydown", (event) => {
     if (event.key === "h") gameRunning = false;
-    const audio = GAME_CONFIG_BACKGROUND_AUDIO;
     switch (event.key) {
         case "m":
             if (audioState < 10) {
                 audioState += 1;
-                audio.volume = audioOptions[audioState];
+                gameAudio.volume = audioOptions[audioState];
             }
             break;
         case "n":
-            console.log("n");
             if (audioState > 0) {
                 audioState -= 1;
-                audio.volume = audioOptions[audioState];
+                gameAudio.volume = audioOptions[audioState];
             }
             break;
     }
