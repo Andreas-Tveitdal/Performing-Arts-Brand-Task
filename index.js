@@ -53,6 +53,11 @@ if (!canvas.getContext) {
 const ctx = canvas.getContext("2d");
 const playerHurtSFX = new Audio("hurtSFX.wav");
 const playerHitSFX = new Audio("hitSFX.wav");
+const backgroundAudioFantasy = new Audio("background_fantasy.wav");
+const backgroundAudioChiptune = new Audio("background_chiptune.wav");
+backgroundAudioFantasy.loop = true;
+backgroundAudioChiptune.loop = true;
+backgroundAudioChiptune.play();
 // end initialization }}}
 
 // TODO: ADD TEXTURE FOR ENEMY
@@ -309,10 +314,8 @@ function enemyMovementRandomConstant(object, time, delay) {
     object.state.randomMoveGoalDelay += 1;
     object.xPos += object.state.changeX;
     object.yPos += object.state.changeY;
-    console.log(object.state);
 }
 function enemyMovementRandomVaried(object, delay, speed) {
-    console.log(object.state);
     if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
     if (!object.state.changeX || !object.state.changeY) {
         object.state.changeX = null;
@@ -329,38 +332,29 @@ function enemyMovementRandomVaried(object, delay, speed) {
         yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
         if (xTarget > 0) {
             object.state.changeX = speed;
-            console.log("positive x");
         }
         else if (xTarget < 0) {
             object.state.changeX = -speed;
-            console.log("negative x");
         }
         else {
             object.state.changeX = 0;
-            console.log("still x");
         }
         if (yTarget > 0) {
             object.state.changeY = speed;
-            console.log("positive y");
         }
         else if (yTarget < 0) {
             object.state.changeY = -speed;
-            console.log("negative y");
         }
         else {
             object.state.changeY = 0;
-            console.log("still y");
         }
     }
-    console.log(object.state);
     if (object.state.randomMoveGoalDelay >= delay) {
         setChange();
         object.state.randomMoveGoalDelay = 0;
     }
-    console.log(object.state);
     object.state.randomMoveGoalDelay += 1;
     object.xPos += object.state.changeX;
-    console.log(object.state);
     object.yPos += object.state.changeY;
 }
 // end enemy }}}
@@ -466,7 +460,6 @@ function handleKeyPresses(keyspressed) {
 }
 // end handling }}}
 function updateGame(renderTimestamp) {
-    console.log(mainEnemy);
     if (!lastTimestamp) lastTimestamp = renderTimestamp;
     deltaTime = (renderTimestamp - lastTimestamp) / GAME_CONFIG_DELTATIME_MODIFIER;
     lastTimestamp = renderTimestamp;
