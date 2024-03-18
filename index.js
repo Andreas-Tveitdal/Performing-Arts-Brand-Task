@@ -57,7 +57,8 @@ const backgroundAudioFantasy = new Audio("background_fantasy.wav");
 const backgroundAudioChiptune = new Audio("background_chiptune.wav");
 backgroundAudioFantasy.loop = true;
 backgroundAudioChiptune.loop = true;
-backgroundAudioChiptune.play();
+let audioState = 10;
+const audioOptions = [ 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 ];
 // end initialization }}}
 
 // TODO: ADD TEXTURE FOR ENEMY
@@ -69,6 +70,7 @@ const GAME_CONFIG_SPLASHTEXT_DURATION = 30;
 const GAME_CONFIG_PLAYERPROJECTILES = true;
 const GAME_CONFIG_DELTATIME_MODIFIER = 10;
 const GAME_CONFIG_DISPLAY_HITBOX = false;
+const GAME_CONFIG_BACKGROUND_AUDIO = backgroundAudioChiptune;
 
 const PLAYER_CONFIG_HEALTH = 14;
 const PLAYER_CONFIG_SPEED = 2.5;
@@ -482,6 +484,7 @@ function updateGame(renderTimestamp) {
     drawObjectHitSplashText(objectHitSplashTexts);
     if (gameRunning) { window.requestAnimationFrame(updateGame); }
     else {
+        GAME_CONFIG_BACKGROUND_AUDIO.pause();
         if (gameLost) {
             deathscreendiv.style.animation = "fade-out 0.5s ease 0s forwards";
             deathscreentext.style.animation = "fade-out 0.5s ease 0s forwards";
@@ -495,6 +498,7 @@ function updateGame(renderTimestamp) {
 }
 
 // start game-variables {{{
+GAME_CONFIG_BACKGROUND_AUDIO.play();
 let player = createPlayerObject();
 let mainEnemy = createEnemyObject();
 let enemyProjectiles = [];
@@ -507,6 +511,7 @@ let gameRunning = false;
 let gameLost = true;
 let firstGame = true;
 function startGame() {
+    GAME_CONFIG_BACKGROUND_AUDIO.play();
     if (gameLost) {
         deathscreendiv.style.animation = "fade-in 2s ease 1s forwards";
         if (!firstGame) {
@@ -536,6 +541,23 @@ function startGame() {
 // end game-variables }}}
 // start player-movement-event-listeners {{{
 document.addEventListener("keydown", (event) => {
+    if (event.key === "h") gameRunning = false;
+    const audio = GAME_CONFIG_BACKGROUND_AUDIO;
+    switch (event.key) {
+        case "m":
+            if (audioState < 10) {
+                audioState += 1;
+                audio.volume = audioOptions[audioState];
+            }
+            break;
+        case "n":
+            console.log("n");
+            if (audioState > 0) {
+                audioState -= 1;
+                audio.volume = audioOptions[audioState];
+            }
+            break;
+    }
     inputKeysPressed[event.key] = true;
 });
 document.addEventListener("keyup", (event) => {
@@ -543,10 +565,6 @@ document.addEventListener("keyup", (event) => {
 });
 // end player-movement-event-listeners }}}
 // start restart-game-event-listener {{{
-document.addEventListener("keydown", (event) => {
-    console.log(event.key);
-    if (event.key === "h") gameRunning = false;
-});
 deathscreenbutton.addEventListener("click", (event) => {
     deathscreendiv.style.visibility = "visible";
     deathscreendiv.style.opacity = 1;
