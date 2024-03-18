@@ -67,7 +67,7 @@ const GAME_CONFIG_DISPLAY_HITBOX = false;
 
 const PLAYER_CONFIG_HEALTH = 14;
 const PLAYER_CONFIG_SPEED = 2.5;
-const PLAYER_CONFIG_DAMAGE = 80;
+const PLAYER_CONFIG_DAMAGE = 800;
 const PLAYER_CONFIG_WIDTH = 50;
 const PLAYER_CONFIG_HEIGHT = 50;
 const PLAYER_CONFIG_TEXTURE_WIDTH = 53;
@@ -432,23 +432,16 @@ let inputKeysPressed = {};
 let deltaTime = null;
 let lastTimestamp = null;
 let gameRunning = false;
-let gameLost = true;
-let firstGame = true;
+let gameLost = false;
 function startGame() {
     if (gameLost) {
         deathscreendiv.style.animation = "fade-in 2s ease 1s forwards";
-        if (!firstGame) {
-            deathscreentext.style.animation = "fade-in 0.2s ease 0s forwards";
-            deathscreenbutton.style.animation = "fade-in 0.2s ease 0s forwards";
-        } else {
-            firstGame = false;
-            deathscreentext.style.animation = "fade-in 0s ease 0s forwards";
-            deathscreenbutton.style.animation = "fade-in 0s ease 0s forwards";
-        }
+        deathscreentext.style.animation = "fade-in 0s ease 0s forwards";
+        deathscreenbutton.style.animation = "fade-in 0s ease 0s forwards";
     } else {
         winscreendiv.style.animation = "fade-in 2s ease 1s forwards";
-        winscreentext.style.animation = "fade-in 0.2s ease 0s forwards";
-        winscreenbutton.style.animation = "fade-in 0.2s ease 0s forwards";
+        winscreentext.style.animation = "fade-in 0s ease 0s forwards";
+        winscreenbutton.style.animation = "fade-in 0s ease 0s forwards";
     }
     player = createPlayerObject();
     mainEnemy = createEnemyObject();
@@ -472,13 +465,9 @@ document.addEventListener("keyup", (event) => {
 // end player-movement-event-listeners }}}
 // start restart-game-event-listener {{{
 deathscreenbutton.addEventListener("click", (event) => {
-    deathscreendiv.style.visibility = "visible";
-    deathscreendiv.style.opacity = 1;
     startGame();
 });
 winscreenbutton.addEventListener("click", (event) => {
-    winscreendiv.style.visibility = "visible";
-    winscreendiv.style.opacity = 1;
     startGame();
 });
 // end restart-game-event-listener }}}

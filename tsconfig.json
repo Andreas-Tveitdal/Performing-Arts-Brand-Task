@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "ES6",
-        "outDir": "ts-built",
-        "rootDir": "script"
-    }
-}

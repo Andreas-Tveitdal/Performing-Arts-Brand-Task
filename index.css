@@ -87,6 +87,50 @@ p {
     vertical-align: top;
     font-size: 2em;
 }
+#winscreen {
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    background-color: pink;
+}
+#wintext {
+    border: 0px;
+    margin: 0px;
+    margin-bottom: 1em;
+    padding: 0px;
+    opacity: 0;
+    visibility: hidden;
+    color: white;
+    text-align: center;
+    font-size: 7em;
+}
+#winbutton {
+    all: unset;
+    border: solid 0px darkred;
+    margin: 0px;
+    margin-top: 5em;
+    padding: 0px;
+    width: 20%;
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+    color: white;
+    text-align: center;
+    text-decoration-line: underline;
+    vertical-align: top;
+    font-size: 2em;
+}
 
 .apply-fade-in {
     animation-name: fade-in;
