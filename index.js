@@ -165,14 +165,18 @@ function createPlayerObject() {
 }
 // end create-things }}}
 
-// start non-game-specific tools {{{
+// start tools {{{
 function removeFromList(item, list) {
     const itemIndex = list.indexOf(item);
     if (itemIndex !== -1) {
         list.splice(itemIndex, 1);
     }
 }
-// end non-game-specific tools }}}
+function objectChangePos(object) {
+    if (object.state.changeX) object.xPos += object.state.changeX;
+    if (object.state.changeY) object.yPos += object.state.changeY;
+}
+// end tools }}}
 // start projectiles {{{
 function changeProjectiles(projectile, _, time) {
     projectile.xPos += projectile.changeX * time;
@@ -210,7 +214,6 @@ function playerInstantiateProjectiles(object) {
     }
     object.state.cooldown = 0;
     for (let i = 0; i < PLAYER_PROJECTILE_COUNT; i++) {
-        console.log(((PLAYER_PROJECTILE_COUNT - 1) / 2 + i) * PLAYER_PROJECTILE_SPACING);
         playerProjectiles.push(createPolarProjectile(
             object.xPos + PLAYER_PROJECTILE_OFFSET_X - ((PLAYER_PROJECTILE_COUNT - 1) / 2 + i) * PLAYER_PROJECTILE_SPACING,
             object.yPos + PLAYER_PROJECTILE_OFFSET_Y,
@@ -221,7 +224,6 @@ function playerInstantiateProjectiles(object) {
             PLAYER_CONFIG_DAMAGE
         ));
     }
-    console.log("\n");
 }
 // end projectiles }}}
 // start drawing-methods {{{
@@ -283,11 +285,28 @@ function circleAttack(object) {
 function enemyMovementHorizontally(object) {
     if (!object.state.changeX) object.state.changeX = ENEMY_CONFIG_SPEED * deltaTime;
     if (object.xPos > canvas.width * 0.8) {
-        object.state.changeX = -ENEMY_CONFIG_SPEED * deltaTime;
+        object.state.changeX = -ENEMY_CONFIG_SPEED;
     } else if (object.xPos < canvas.width * 0.2) {
-        object.state.changeX = ENEMY_CONFIG_SPEED * deltaTime;
+        object.state.changeX = ENEMY_CONFIG_SPEED;
     }
     object.xPos += object.state.changeX;
+}
+function enemyMovementRandom(object, time) {
+    const LIMX = canvas.width * 0.9;
+    const LIMY = canvas.height * 0.4;
+    const MINX = canvas.width * 0.1;
+    const MINY = canvas.height * 0.1; 
+    if (!object.state.changeX || !object.state.changeY) object.state.changeX, object.state.changeY = null, null;
+    const randX = Math.random();
+    const randY = Math.random();
+    xTarget = randX * (LIMX - MINX) + MINX - object.xPos;
+    yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
+    if (xTarget + object.xPos > canvas.width) throw new Error("target not in canvas");
+    if (yTarget + object.yPos > canvas.height) throw new Error("target not in canvas");
+    object.state.changeX = xTarget / time;
+    object.state.changeY = yTarget / time;
+    console.log("x", xTarget + object.xPos);
+    console.log("y", yTarget + object.yPos);
 }
 // end enemy }}}
 // start handling {{{
@@ -341,6 +360,14 @@ function handleMainEnemyAttacks(object) {
     object.state.circleAttack.delay += 1;
 }
 function handleMainEnemyLife(object) {
+    // enemyMovementHorizontally(mainEnemy);
+    if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
+    if (object.state.randomMoveGoalDelay >= 50) {
+        enemyMovementRandom(object, 120);
+        object.state.randomMoveGoalDelay = 0;
+    }
+    objectChangePos(object);
+    object.state.randomMoveGoalDelay += 1;
     if (GAME_CONFIG_PLAYERPROJECTILES) {
         handleProjectileHit(object, playerProjectiles);
     } else {
@@ -393,8 +420,9 @@ function updateGame(renderTimestamp) {
     deltaTime = (renderTimestamp - lastTimestamp) / GAME_CONFIG_DELTATIME_MODIFIER;
     lastTimestamp = renderTimestamp;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "green";
+    ctx.fillRect(canvas.width * 0.1, canvas.height * 0.1, canvas.width * 0.8, canvas.height * 0.3);
     handleKeyPresses(inputKeysPressed);
-    enemyMovementHorizontally(mainEnemy);
     updateProjectiles([
         changeProjectiles,
         removeRedundantProjectiles,
@@ -471,6 +499,10 @@ document.addEventListener("keyup", (event) => {
 });
 // end player-movement-event-listeners }}}
 // start restart-game-event-listener {{{
+document.addEventListener("keydown", (event) => {
+    console.log(event.key);
+    if (event.key === "h") gameRunning = false;
+});
 deathscreenbutton.addEventListener("click", (event) => {
     deathscreendiv.style.visibility = "visible";
     deathscreendiv.style.opacity = 1;

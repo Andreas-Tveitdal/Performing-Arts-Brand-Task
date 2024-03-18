@@ -1,0 +1,36 @@
+// "use strict";
+
+// start initialization {{{
+const deathscreendiv = document.getElementById("deathscreen");
+const deathscreentext = document.getElementById("deathtext");
+const deathscreenbutton = document.getElementById("deathbutton");
+const winscreendiv = document.getElementById("winscreen");
+const winscreentext = document.getElementById("wintext");
+const winscreenbutton = document.getElementById("winbutton");
+const body = document.getElementById("body");
+const canvas = document.getElementById("canvas");
+if (!canvas) {
+    throw new Error("No canvas found");
+}
+canvas.width = body.offsetWidth;
+canvas.height = body.offsetHeight;
+if (!canvas.getContext) {
+    throw new Error("No context found");
+}
+const ctx = canvas.getContext("2d");
+// end initialization }}}
+
+function updateGame(renderTimestamp) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "green";
+    ctx.fillRect(0, 0, canvas.width * 0.9, canvas.height * 0.9);
+    window.requestAnimationFrame(updateGame);
+}
+// window.requestAnimationFrame(updateGame);
+
+deathscreendiv.style.animation = "fade-in 0s ease 0s forwards";
+deathscreentext.style.animation = "fade-in 0s ease 0s forwards";
+deathscreenbutton.style.animation = "fade-in 0s ease 0s forwards";
+ctx.fillStyle = "green";
+ctx.fillRect(canvas.width * 0.1, canvas.height * 0.1, canvas.width * 0.8, canvas.height * 0.8);
+
