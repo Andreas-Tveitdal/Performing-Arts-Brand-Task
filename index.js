@@ -172,10 +172,6 @@ function removeFromList(item, list) {
         list.splice(itemIndex, 1);
     }
 }
-function objectChangePos(object) {
-    if (object.state.changeX) object.xPos += object.state.changeX;
-    if (object.state.changeY) object.yPos += object.state.changeY;
-}
 // end tools }}}
 // start projectiles {{{
 function changeProjectiles(projectile, _, time) {
@@ -291,22 +287,81 @@ function enemyMovementHorizontally(object) {
     }
     object.xPos += object.state.changeX;
 }
-function enemyMovementRandom(object, time) {
+function enemyMovementRandomConstant(object, time, delay) {
+    if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
+    if (!object.state.changeX || !object.state.changeY) object.state.changeX, object.state.changeY = null, null;
     const LIMX = canvas.width * 0.9;
     const LIMY = canvas.height * 0.4;
     const MINX = canvas.width * 0.1;
     const MINY = canvas.height * 0.1; 
-    if (!object.state.changeX || !object.state.changeY) object.state.changeX, object.state.changeY = null, null;
-    const randX = Math.random();
-    const randY = Math.random();
-    xTarget = randX * (LIMX - MINX) + MINX - object.xPos;
-    yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
-    if (xTarget + object.xPos > canvas.width) throw new Error("target not in canvas");
-    if (yTarget + object.yPos > canvas.height) throw new Error("target not in canvas");
-    object.state.changeX = xTarget / time;
-    object.state.changeY = yTarget / time;
-    console.log("x", xTarget + object.xPos);
-    console.log("y", yTarget + object.yPos);
+    function setChange() {
+        const randX = Math.random();
+        const randY = Math.random();
+        xTarget = randX * (LIMX - MINX) + MINX - object.xPos;
+        yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
+        object.state.changeX = xTarget / time;
+        object.state.changeY = yTarget / time;
+    }
+    if (object.state.randomMoveGoalDelay >= delay) {
+        setChange();
+        object.state.randomMoveGoalDelay = 0;
+    }
+    object.state.randomMoveGoalDelay += 1;
+    object.xPos += object.state.changeX;
+    object.yPos += object.state.changeY;
+    console.log(object.state);
+}
+function enemyMovementRandomVaried(object, delay, speed) {
+    console.log(object.state);
+    if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
+    if (!object.state.changeX || !object.state.changeY) {
+        object.state.changeX = null;
+        object.state.changeY = null;
+    }
+    const LIMX = canvas.width * 0.9;
+    const LIMY = canvas.height * 0.4;
+    const MINX = canvas.width * 0.1;
+    const MINY = canvas.height * 0.1;
+    function setChange() {
+        const randX = Math.random();
+        const randY = Math.random();
+        xTarget = randX * (LIMX - MINX) + MINX - object.xPos;
+        yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
+        if (xTarget > 0) {
+            object.state.changeX = speed;
+            console.log("positive x");
+        }
+        else if (xTarget < 0) {
+            object.state.changeX = -speed;
+            console.log("negative x");
+        }
+        else {
+            object.state.changeX = 0;
+            console.log("still x");
+        }
+        if (yTarget > 0) {
+            object.state.changeY = speed;
+            console.log("positive y");
+        }
+        else if (yTarget < 0) {
+            object.state.changeY = -speed;
+            console.log("negative y");
+        }
+        else {
+            object.state.changeY = 0;
+            console.log("still y");
+        }
+    }
+    console.log(object.state);
+    if (object.state.randomMoveGoalDelay >= delay) {
+        setChange();
+        object.state.randomMoveGoalDelay = 0;
+    }
+    console.log(object.state);
+    object.state.randomMoveGoalDelay += 1;
+    object.xPos += object.state.changeX;
+    console.log(object.state);
+    object.yPos += object.state.changeY;
 }
 // end enemy }}}
 // start handling {{{
@@ -361,13 +416,8 @@ function handleMainEnemyAttacks(object) {
 }
 function handleMainEnemyLife(object) {
     // enemyMovementHorizontally(mainEnemy);
-    if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
-    if (object.state.randomMoveGoalDelay >= 50) {
-        enemyMovementRandom(object, 120);
-        object.state.randomMoveGoalDelay = 0;
-    }
-    objectChangePos(object);
-    object.state.randomMoveGoalDelay += 1;
+    // enemyMovementRandomConstant(object, 120, 50);
+    enemyMovementRandomVaried(object, 50, ENEMY_CONFIG_SPEED);
     if (GAME_CONFIG_PLAYERPROJECTILES) {
         handleProjectileHit(object, playerProjectiles);
     } else {
@@ -416,6 +466,7 @@ function handleKeyPresses(keyspressed) {
 }
 // end handling }}}
 function updateGame(renderTimestamp) {
+    console.log(mainEnemy);
     if (!lastTimestamp) lastTimestamp = renderTimestamp;
     deltaTime = (renderTimestamp - lastTimestamp) / GAME_CONFIG_DELTATIME_MODIFIER;
     lastTimestamp = renderTimestamp;
