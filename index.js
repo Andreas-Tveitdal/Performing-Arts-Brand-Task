@@ -471,14 +471,39 @@ function handlePlayerLife(object) {
     }
 }
 function handleMainEnemyAttacks(object) {
-    if (!object.state.circleAttack) object.state.circleAttack = {};
-    if (!object.state.circleAttack.delay) object.state.circleAttack.delay = 0;
-    if (object.state.circleAttack.delay > 40) {
-        // circleAttack(object);
-        spreadAttack(object);
-        object.state.circleAttack.delay = 0;
+    const randomAttackMethod = () => {
+        const methods = [
+            () => {spreadAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+            () => {circleAttack(object);},
+        ];
+        const methodIndex = Math.round(Math.random() * 18);
+        return methods[methodIndex];
+    };
+    if (!object.state.attackMethodDelay) object.state.attackMethodDelay = 0;
+    if (!object.state.attackMethod) object.state.attackMethod = randomAttackMethod();
+    if (object.state.attackMethodDelay >= 40) {
+        object.state.attackMethod = randomAttackMethod();
+        object.state.attackMethod();
+        object.state.attackMethodDelay = 0;
     }
-    object.state.circleAttack.delay += 1;
+    object.state.attackMethodDelay += 1;
 }
 function handleMainEnemyLife(object) {
     const randomMoveMethod = () => {
