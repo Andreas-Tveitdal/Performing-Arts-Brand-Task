@@ -14,12 +14,14 @@ canvas {
     padding: 0px;
     width: 100%;
     height: 100%;
-    background-image: url("./background.jpg");
+    background: rgb(2,0,36);
+    background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(0,46,81,1) 0%, rgba(0,64,96,1) 100%);
+    background-image: url("./background_4695x2103.png");
     background-size: 100% 100%;
 }
 
 p {
-    font-family: "Comic Sans MS", "Comic Sans", cursive;
+    font-family: cursive, "Comic Sans MS", "Comic Sans";
 }
 
 @keyframes fade-in {

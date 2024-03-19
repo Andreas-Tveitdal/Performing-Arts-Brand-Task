@@ -9,6 +9,10 @@ const sourceImages = [
     "gigantus_53x59.png",
     "gigantus_64x48.png",
     "gigantus_55x61.png",
+    "projectile_red_5x5.png",
+    "projectile_red_9x9.png",
+    "projectile_blue_9x9.png",
+    "projectile_green_9x9.png",
 ];
 const gameTextures = {};
 Promise.all(sourceImages.map((image) => {
@@ -51,10 +55,12 @@ if (!canvas.getContext) {
     throw new Error("No context found");
 }
 const ctx = canvas.getContext("2d");
-const playerHurtSFX = new Audio("hurtSFX.wav");
-const playerHitSFX = new Audio("hitSFX.wav");
-const backgroundAudioFantasy = new Audio("background_fantasy.wav");
-const backgroundAudioChiptune = new Audio("background_chiptune.wav");
+const playerHurtSFX = new Audio("./hurtSFX.wav");
+const playerHitSFX = new Audio("./hitSFX.wav");
+const playerWinSFX = new Audio("./winSFX.wav");
+const playerLoseSFX = new Audio("./loseSFX.wav");
+const backgroundAudioFantasy = new Audio("./background_fantasy.wav");
+const backgroundAudioChiptune = new Audio("./background_chiptune.wav");
 const gameAudio = backgroundAudioChiptune;
 let audioState = 10;
 const audioOptions = [ 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 ];
@@ -70,26 +76,26 @@ gameAudio.addEventListener("ended", function() {
 // start config {{{
 const GAME_CONFIG_MAX_PROJECTILECOUNT = 10000;
 const GAME_CONFIG_SPLASHTEXT_DURATION = 30;
-const GAME_CONFIG_PLAYERPROJECTILES = false;
+const GAME_CONFIG_PLAYERPROJECTILES = true;
 const GAME_CONFIG_DELTATIME_MODIFIER = 10;
 const GAME_CONFIG_DISPLAY_HITBOX = false;
 
 const PLAYER_CONFIG_HEALTH = 14;
 const PLAYER_CONFIG_SPEED = 2.5;
-const PLAYER_CONFIG_DAMAGE = 5;
+const PLAYER_CONFIG_DAMAGE = 20;
 const PLAYER_CONFIG_WIDTH = 50;
 const PLAYER_CONFIG_HEIGHT = 50;
-const PLAYER_CONFIG_TEXTURE_WIDTH = 83;
+const PLAYER_CONFIG_TEXTURE_WIDTH = 53;
 const PLAYER_CONFIG_TEXTURE_HEIGHT = 59;
 const PLAYER_CONFIG_TEXTURE_OFFSET_X = -3;
 const PLAYER_CONFIG_TEXTURE_OFFSET_Y = -4;
 const PLAYER_TEXTURE = "gigantus_55x61.png";
 const PLAYER_START_X = (canvas.width - PLAYER_CONFIG_WIDTH) / 2;
 const PLAYER_START_Y = (canvas.width - PLAYER_CONFIG_HEIGHT) / 2;
-const PLAYER_PROJECTILE_COUNT = 1;
+const PLAYER_PROJECTILE_COUNT = 2;
 const PLAYER_PROJECTILE_SPACING = 15;
-const PLAYER_PROJECTILE_WIDTH = 5;
-const PLAYER_PROJECTILE_HEIGHT = 7;
+const PLAYER_PROJECTILE_WIDTH = 9;
+const PLAYER_PROJECTILE_HEIGHT = 9;
 const PLAYER_PROJECTILE_OFFSET_X = PLAYER_CONFIG_WIDTH / 2;
 const PLAYER_PROJECTILE_OFFSET_Y = -10;
 const PLAYER_PROJECTILE_COOLDOWN = 4;
@@ -111,8 +117,8 @@ const ENEMY_CONFIG_TEXTURE_OFFSET_Y = -4;
 const ENEMY_TEXTURE = "enemy_42x30.png";
 const ENEMY_START_X = (canvas.width - ENEMY_CONFIG_WIDTH) / 2;
 const ENEMY_START_Y = (canvas.width - ENEMY_CONFIG_HEIGHT) / 10;
-const ENEMY_PROJECTILE_WIDTH = 5;
-const ENEMY_PROJECTILE_HEIGHT = 7;
+const ENEMY_PROJECTILE_WIDTH = 9;
+const ENEMY_PROJECTILE_HEIGHT = 9;
 const ENEMY_PROJECTILE_OFFSET_X = ENEMY_CONFIG_WIDTH / 2;
 const ENEMY_PROJECTILE_OFFSET_Y = -10;
 const ENEMY_PROJECTILE_COOLDOWN = 3;
@@ -195,9 +201,10 @@ function removeRedundantProjectiles(projectile, projectileList) {
 }
 function updateProjectiles(updateFunctionList, projectileLists) {
     for (const projectileList of projectileLists) {
+        const texture = projectileList.texture;
         for (const projectile of projectileList) {
             for (const updateFunction of updateFunctionList) {
-                updateFunction(projectile, projectileList, deltaTime);
+                updateFunction(projectile, projectileList, deltaTime, texture);
             }
         }
     }
@@ -220,7 +227,7 @@ function playerInstantiateProjectiles(object) {
     object.state.cooldown = 0;
     for (let i = 0; i < PLAYER_PROJECTILE_COUNT; i++) {
         playerProjectiles.push(createPolarProjectile(
-            object.xPos + PLAYER_PROJECTILE_OFFSET_X - ((PLAYER_PROJECTILE_COUNT - 1) / 2 + i) * PLAYER_PROJECTILE_SPACING,
+            object.xPos + PLAYER_PROJECTILE_OFFSET_X + (-(PLAYER_PROJECTILE_COUNT - 1) / 2 + i) * PLAYER_PROJECTILE_SPACING,
             object.yPos + PLAYER_PROJECTILE_OFFSET_Y,
             PLAYER_PROJECTILE_WIDTH,
             PLAYER_PROJECTILE_HEIGHT,
@@ -254,9 +261,24 @@ function drawHitbox(object, color) {
     ctx.fillStyle = color;
     ctx.fillRect(object.xPos, object.yPos, object.width, object.height);
 }
-function drawProjectiles(projectile) {
-    ctx.fillStyle = "red";
-    ctx.fillRect(projectile.xPos, projectile.yPos, projectile.width, projectile.height);
+function drawObject(object, texture, xOffset, yOffset) {
+    if (GAME_CONFIG_DISPLAY_HITBOX) drawHitbox(object, "green");
+    ctx.drawImage(
+        gameTextures[texture],
+        object.xPos + xOffset,
+        object.yPos + yOffset,
+        object.width,
+        object.height
+    );
+}
+function drawProjectiles(projectile, _, __, textureName) {
+    ctx.drawImage(
+        gameTextures[textureName],
+        projectile.xPos - projectile.width / 2,
+        projectile.yPos - projectile.height / 2,
+        projectile.width,
+        projectile.height
+    );
 }
 // end drawing-methods }}}
 // start enemy {{{
@@ -298,7 +320,10 @@ function enemyMovementHorizontally(object) {
 }
 function enemyMovementRandomConstant(object, time, delay) {
     if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
-    if (!object.state.changeX || !object.state.changeY) object.state.changeX, object.state.changeY = null, null;
+    if (!object.state.changeX || !object.state.changeY) {
+        object.state.changeX = null;
+        object.state.changeY = null;
+    }
     const LIMX = canvas.width * 0.9;
     const LIMY = canvas.height * 0.4;
     const MINX = canvas.width * 0.1;
@@ -310,6 +335,40 @@ function enemyMovementRandomConstant(object, time, delay) {
         yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
         object.state.changeX = xTarget / time;
         object.state.changeY = yTarget / time;
+    }
+    if (object.state.randomMoveGoalDelay >= delay) {
+        setChange();
+        object.state.randomMoveGoalDelay = 0;
+    }
+    object.state.randomMoveGoalDelay += 1;
+    object.xPos += object.state.changeX;
+    object.yPos += object.state.changeY;
+}
+function enemyMovementRandomMax(object, time, delay) {
+    if (!object.state.randomMoveGoalDelay) object.state.randomMoveGoalDelay = 0;
+    if (!object.state.changeX || !object.state.changeY) {
+        object.state.changeX = null;
+        object.state.changeY = null;
+    }
+    const LIMX = canvas.width * 0.9;
+    const LIMY = canvas.height * 0.4;
+    const MINX = canvas.width * 0.1;
+    const MINY = canvas.height * 0.1; 
+    const MOVEMAX = 5;
+    const MOVEMIN = -5;
+    function setChange() {
+        const randX = Math.random();
+        const randY = Math.random();
+        xTarget = randX * (LIMX - MINX) + MINX - object.xPos;
+        yTarget = randY * (LIMY - MINY) + MINY - object.yPos;
+        xTarget /= time;
+        yTarget /= time;
+        if (xTarget < MOVEMIN) { object.state.changeX = MOVEMIN; }
+        else if (xTarget > MOVEMAX) { object.state.changeX = MOVEMAX; }
+        else { object.state.changeX = xTarget; }
+        if (yTarget < MOVEMIN) { object.state.changeY = MOVEMIN; }
+        else if (yTarget > MOVEMAX) { object.state.changeY = MOVEMAX; }
+        else { object.state.changeY = yTarget; }
     }
     if (object.state.randomMoveGoalDelay >= delay) {
         setChange();
@@ -381,14 +440,7 @@ function handleProjectileHit(object, projectilesCanHurt) {
 function handlePlayerLife(object) {
     handleProjectileHit(object, enemyProjectiles);
     if (object.hp > 0) { 
-        if (GAME_CONFIG_DISPLAY_HITBOX) drawHitbox(object, "green");
-        ctx.drawImage(
-            gameTextures[PLAYER_TEXTURE],
-            object.xPos + PLAYER_CONFIG_TEXTURE_OFFSET_X,
-            object.yPos + PLAYER_CONFIG_TEXTURE_OFFSET_Y,
-            PLAYER_CONFIG_TEXTURE_WIDTH,
-            PLAYER_CONFIG_TEXTURE_HEIGHT
-        );
+        drawObject(object, PLAYER_TEXTURE, PLAYER_CONFIG_TEXTURE_OFFSET_X, PLAYER_CONFIG_TEXTURE_OFFSET_Y);
         if (GAME_CONFIG_PLAYERPROJECTILES) playerInstantiateProjectiles(player);
         drawHealthBar(
             PLAYER_HEALTHBAR_X,
@@ -413,22 +465,33 @@ function handleMainEnemyAttacks(object) {
     object.state.circleAttack.delay += 1;
 }
 function handleMainEnemyLife(object) {
-    // enemyMovementHorizontally(mainEnemy);
-    // enemyMovementRandomConstant(object, 120, 50);
-    enemyMovementRandomVaried(object, 50, ENEMY_CONFIG_SPEED);
+    const randomMoveMethod = () => {
+        const methods = [
+            () => {enemyMovementRandomConstant(object, 120, 50);},
+            () => {enemyMovementRandomMax(object, 120, 50);},
+            () => {enemyMovementHorizontally(mainEnemy);},
+            () => {enemyMovementRandomVaried(object, 50, ENEMY_CONFIG_SPEED);},
+        ];
+        const methodIndex = Math.round(Math.random() * 3);
+        console.log(methodIndex);
+        return methods[methodIndex];
+    };
+    if (!object.state.moveMethodDelay) object.state.moveMethodDelay = 0;
+    if (!object.state.moveMethod) object.state.moveMethod = randomMoveMethod();
+    if (object.state.moveMethodDelay >= 600) {
+        object.state.moveMethod = randomMoveMethod();
+        object.state.moveMethodDelay = 0;
+    }
+    object.state.moveMethodDelay += 1;
+    object.state.moveMethod();
+     
     if (GAME_CONFIG_PLAYERPROJECTILES) {
         handleProjectileHit(object, playerProjectiles);
     } else {
         object.hp -= PLAYER_CONFIG_DAMAGE;
     }
     if (object.hp > 0) {
-        ctx.drawImage(
-            gameTextures[ENEMY_TEXTURE],
-            object.xPos + ENEMY_CONFIG_TEXTURE_OFFSET_X,
-            object.yPos + ENEMY_CONFIG_TEXTURE_OFFSET_Y,
-            ENEMY_CONFIG_TEXTURE_WIDTH,
-            ENEMY_CONFIG_TEXTURE_HEIGHT
-        );
+        drawObject(object, ENEMY_TEXTURE, ENEMY_CONFIG_TEXTURE_OFFSET_X, ENEMY_CONFIG_TEXTURE_OFFSET_Y);
         handleMainEnemyAttacks(object);
         drawHealthBar(
             ENEMY_HEALTHBAR_X,
@@ -486,10 +549,12 @@ function updateGame(renderTimestamp) {
     else {
         gameAudio.pause();
         if (gameLost) {
+            playerLoseSFX.play();
             deathscreendiv.style.animation = "fade-out 0.5s ease 0s forwards";
             deathscreentext.style.animation = "fade-out 0.5s ease 0s forwards";
             deathscreenbutton.style.animation = "fade-out 0.5s ease 0s forwards";
         } else {
+            playerWinSFX.play();
             winscreendiv.style.animation = "fade-out 0.5s ease 0s forwards";
             winscreentext.style.animation = "fade-out 0.5s ease 0s forwards";
             winscreenbutton.style.animation = "fade-out 0.5s ease 0s forwards";
@@ -529,7 +594,9 @@ function startGame() {
     player = createPlayerObject();
     mainEnemy = createEnemyObject();
     enemyProjectiles = [];
+    enemyProjectiles.texture = "projectile_red_9x9.png";
     playerProjectiles = [];
+    playerProjectiles.texture = "projectile_green_9x9.png";
     objectHitSplashTexts = [];
     inputKeysPressed = {};
     deltaTime = null;
@@ -540,8 +607,11 @@ function startGame() {
 // end game-variables }}}
 // start player-movement-event-listeners {{{
 document.addEventListener("keydown", (event) => {
-    if (event.key === "h") gameRunning = false;
     switch (event.key) {
+        case "h":
+            gameLost = true;
+            gameRunning = false;
+            break;
         case "m":
             if (audioState < 10) {
                 audioState += 1;
