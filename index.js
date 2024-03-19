@@ -309,6 +309,21 @@ function circleAttack(object) {
         ));
     }
 }
+function spreadAttack(object) {
+    
+    const playerAngle = Math.atan2(player.yPos - object.yPos, player.xPos - object.xPos) * 180 / Math.PI
+    for (let i = playerAngle - 45; i <= playerAngle + 45; i += 10) {
+        enemyProjectiles.push(createPolarProjectile(
+            object.xPos + object.width / 2,
+            object.yPos + object.height / 2,
+            ENEMY_PROJECTILE_WIDTH,
+            ENEMY_PROJECTILE_HEIGHT,
+            i,
+            ENEMY_PROJECTILE_SPEED,
+            ENEMY_CONFIG_DAMAGE
+        ));
+    }
+}
 function enemyMovementHorizontally(object) {
     if (!object.state.changeX) object.state.changeX = ENEMY_CONFIG_SPEED * deltaTime;
     if (object.xPos > canvas.width * 0.8) {
@@ -459,7 +474,8 @@ function handleMainEnemyAttacks(object) {
     if (!object.state.circleAttack) object.state.circleAttack = {};
     if (!object.state.circleAttack.delay) object.state.circleAttack.delay = 0;
     if (object.state.circleAttack.delay > 40) {
-        circleAttack(object);
+        // circleAttack(object);
+        spreadAttack(object);
         object.state.circleAttack.delay = 0;
     }
     object.state.circleAttack.delay += 1;
@@ -473,7 +489,6 @@ function handleMainEnemyLife(object) {
             () => {enemyMovementRandomVaried(object, 50, ENEMY_CONFIG_SPEED);},
         ];
         const methodIndex = Math.round(Math.random() * 3);
-        console.log(methodIndex);
         return methods[methodIndex];
     };
     if (!object.state.moveMethodDelay) object.state.moveMethodDelay = 0;
