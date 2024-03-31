@@ -70,15 +70,18 @@ gameAudio.addEventListener("ended", function() {
 });
 // end initialization }}}
 
-// TODO: ADD TEXTURE FOR ENEMY
-// TODO: ADD TEXTURE FOR PROJECTILES
+// TODO: CREATE A WAY TO IMPLEMENT STATE ON OBJECTS EASIER
+// TODO: MAKE NEW IMPLEMENTATION OF OBJECT DRAWING
+// TODO: CHANGE HOW A RANDOM ATTACK IS CHOSEN
+// TODO: CHANGE HOW A RANDOM MOVEMENT PATTERN IS CHOSEN
+
 
 // start config {{{
-const GAME_CONFIG_MAX_PROJECTILECOUNT = 10000;
-const GAME_CONFIG_SPLASHTEXT_DURATION = 30;
-const GAME_CONFIG_PLAYERPROJECTILES = true;
-const GAME_CONFIG_DELTATIME_MODIFIER = 10;
-const GAME_CONFIG_DISPLAY_HITBOX = false;
+const GAMECONFIG_MAX_PROJECTILECOUNT = 10000;
+const GAMECONFIG_SPLASHTEXT_DURATION = 30;
+const GAMECONFIG_PLAYERPROJECTILES = true;
+const GAMECONFIG_DELTATIME_MODIFIER = 10;
+const GAMECONFIG_DISPLAY_HITBOX = false;
 
 const PLAYER_CONFIG_HEALTH = 14;
 const PLAYER_CONFIG_SPEED = 2.5;
@@ -105,28 +108,28 @@ const PLAYER_HEALTHBAR_Y = canvas.height - canvas.height / 30;
 const PLAYER_HEALTHBAR_W = canvas.width / 4;
 const PLAYER_HEALTHBAR_H = canvas.height / 100;
 
-const ENEMY_CONFIG_HEALTH = 10000;
-const ENEMY_CONFIG_SPEED = 2;
-const ENEMY_CONFIG_DAMAGE = 1;
-const ENEMY_CONFIG_WIDTH = 50;
-const ENEMY_CONFIG_HEIGHT = 50;
-const ENEMY_CONFIG_TEXTURE_WIDTH = 53;
-const ENEMY_CONFIG_TEXTURE_HEIGHT = 59;
-const ENEMY_CONFIG_TEXTURE_OFFSET_X = -3;
-const ENEMY_CONFIG_TEXTURE_OFFSET_Y = -4;
-const ENEMY_TEXTURE = "enemy_42x30.png";
-const ENEMY_START_X = (canvas.width - ENEMY_CONFIG_WIDTH) / 2;
-const ENEMY_START_Y = (canvas.width - ENEMY_CONFIG_HEIGHT) / 10;
-const ENEMY_PROJECTILE_WIDTH = 9;
-const ENEMY_PROJECTILE_HEIGHT = 9;
-const ENEMY_PROJECTILE_OFFSET_X = ENEMY_CONFIG_WIDTH / 2;
-const ENEMY_PROJECTILE_OFFSET_Y = -10;
-const ENEMY_PROJECTILE_COOLDOWN = 3;
-const ENEMY_PROJECTILE_SPEED = 3;
-const ENEMY_HEALTHBAR_X = canvas.width / 20;
-const ENEMY_HEALTHBAR_Y = canvas.height / 50;
-const ENEMY_HEALTHBAR_W = canvas.width - 2 * ENEMY_HEALTHBAR_X;
-const ENEMY_HEALTHBAR_H = canvas.height / 150;
+const SLIME_CONFIG_HEALTH = 10000;
+const SLIME_CONFIG_SPEED = 2;
+const SLIME_CONFIG_DAMAGE = 1;
+const SLIME_CONFIG_WIDTH = 50;
+const SLIME_CONFIG_HEIGHT = 50;
+const SLIME_CONFIG_TEXTURE_WIDTH = 53;
+const SLIME_CONFIG_TEXTURE_HEIGHT = 59;
+const SLIME_CONFIG_TEXTURE_OFFSET_X = -3;
+const SLIME_CONFIG_TEXTURE_OFFSET_Y = -4;
+const SLIME_TEXTURE = "enemy_42x30.png";
+const SLIME_START_X = (canvas.width - SLIME_CONFIG_WIDTH) / 2;
+const SLIME_START_Y = (canvas.width - SLIME_CONFIG_HEIGHT) / 10;
+const SLIME_PROJECTILE_WIDTH = 9;
+const SLIME_PROJECTILE_HEIGHT = 9;
+const SLIME_PROJECTILE_OFFSET_X = SLIME_CONFIG_WIDTH / 2;
+const SLIME_PROJECTILE_OFFSET_Y = -10;
+const SLIME_PROJECTILE_COOLDOWN = 3;
+const SLIME_PROJECTILE_SPEED = 3;
+const SLIME_HEALTHBAR_X = canvas.width / 20;
+const SLIME_HEALTHBAR_Y = canvas.height / 50;
+const SLIME_HEALTHBAR_W = canvas.width - 2 * SLIME_HEALTHBAR_X;
+const SLIME_HEALTHBAR_H = canvas.height / 150;
 // end config }}}
 
 // start create-things {{{
@@ -156,11 +159,11 @@ function createPolarProjectile(x, y, w, h, a, s, d) {
 }
 function createEnemyObject() {
     return {
-        xPos: ENEMY_START_X,
-        yPos: ENEMY_START_Y,
-        width: ENEMY_CONFIG_WIDTH,
-        height: ENEMY_CONFIG_HEIGHT,
-        hp: ENEMY_CONFIG_HEALTH,
+        xPos: SLIME_START_X,
+        yPos: SLIME_START_Y,
+        width: SLIME_CONFIG_WIDTH,
+        height: SLIME_CONFIG_HEIGHT,
+        hp: SLIME_CONFIG_HEALTH,
         state: {
             hurtSFX: playerHitSFX
         }
@@ -262,7 +265,7 @@ function drawHitbox(object, color) {
     ctx.fillRect(object.xPos, object.yPos, object.width, object.height);
 }
 function drawObject(object, texture, xOffset, yOffset) {
-    if (GAME_CONFIG_DISPLAY_HITBOX) drawHitbox(object, "green");
+    if (GAMECONFIG_DISPLAY_HITBOX) drawHitbox(object, "green");
     ctx.drawImage(
         gameTextures[texture],
         object.xPos + xOffset,
@@ -288,11 +291,11 @@ function weirdEnemyAttack(object) {
     enemyProjectiles.push(createPolarProjectile(
         object.xPos + object.width / 2,
         object.yPos + object.height / 2,
-        ENEMY_PROJECTILE_WIDTH,
-        ENEMY_PROJECTILE_HEIGHT,
+        SLIME_PROJECTILE_WIDTH,
+        SLIME_PROJECTILE_HEIGHT,
         object.state.spinAttack.currentAngle,
-        ENEMY_PROJECTILE_SPEED,
-        ENEMY_CONFIG_DAMAGE
+        SLIME_PROJECTILE_SPEED,
+        SLIME_CONFIG_DAMAGE
     ));
     object.state.spinAttack.currentAngle += 1;
 }
@@ -301,11 +304,11 @@ function circleAttack(object) {
         enemyProjectiles.push(createPolarProjectile(
             object.xPos + object.width / 2,
             object.yPos + object.height / 2,
-            ENEMY_PROJECTILE_WIDTH,
-            ENEMY_PROJECTILE_HEIGHT,
+            SLIME_PROJECTILE_WIDTH,
+            SLIME_PROJECTILE_HEIGHT,
             i,
-            ENEMY_PROJECTILE_SPEED,
-            ENEMY_CONFIG_DAMAGE
+            SLIME_PROJECTILE_SPEED,
+            SLIME_CONFIG_DAMAGE
         ));
     }
 }
@@ -316,20 +319,20 @@ function spreadAttack(object) {
         enemyProjectiles.push(createPolarProjectile(
             object.xPos + object.width / 2,
             object.yPos + object.height / 2,
-            ENEMY_PROJECTILE_WIDTH,
-            ENEMY_PROJECTILE_HEIGHT,
+            SLIME_PROJECTILE_WIDTH,
+            SLIME_PROJECTILE_HEIGHT,
             i,
-            ENEMY_PROJECTILE_SPEED,
-            ENEMY_CONFIG_DAMAGE
+            SLIME_PROJECTILE_SPEED,
+            SLIME_CONFIG_DAMAGE
         ));
     }
 }
 function enemyMovementHorizontally(object) {
-    if (!object.state.changeX) object.state.changeX = ENEMY_CONFIG_SPEED * deltaTime;
+    if (!object.state.changeX) object.state.changeX = SLIME_CONFIG_SPEED * deltaTime;
     if (object.xPos > canvas.width * 0.8) {
-        object.state.changeX = -ENEMY_CONFIG_SPEED;
+        object.state.changeX = -SLIME_CONFIG_SPEED;
     } else if (object.xPos < canvas.width * 0.2) {
-        object.state.changeX = ENEMY_CONFIG_SPEED;
+        object.state.changeX = SLIME_CONFIG_SPEED;
     }
     object.xPos += object.state.changeX;
 }
@@ -446,7 +449,7 @@ function handleProjectileHit(object, projectilesCanHurt) {
             text: projectileHit.damage.toString(),
             xPos: projectileHit.xPos + offset,
             yPos: projectileHit.yPos + offset,
-            timeLeft: GAME_CONFIG_SPLASHTEXT_DURATION
+            timeLeft: GAMECONFIG_SPLASHTEXT_DURATION
         });
         object.hp -= projectileHit.damage;
         removeFromList(projectileHit, projectilesCanHurt);
@@ -456,7 +459,7 @@ function handlePlayerLife(object) {
     handleProjectileHit(object, enemyProjectiles);
     if (object.hp > 0) { 
         drawObject(object, PLAYER_TEXTURE, PLAYER_CONFIG_TEXTURE_OFFSET_X, PLAYER_CONFIG_TEXTURE_OFFSET_Y);
-        if (GAME_CONFIG_PLAYERPROJECTILES) playerInstantiateProjectiles(player);
+        if (GAMECONFIG_PLAYERPROJECTILES) playerInstantiateProjectiles(player);
         drawHealthBar(
             PLAYER_HEALTHBAR_X,
             PLAYER_HEALTHBAR_Y,
@@ -471,6 +474,7 @@ function handlePlayerLife(object) {
     }
 }
 function handleMainEnemyAttacks(object) {
+    // TODO: CHANGE HOW A RANDOM ATTACK IS CHOSEN
     const randomAttackMethod = () => {
         const methods = [
             () => {spreadAttack(object);},
@@ -506,12 +510,13 @@ function handleMainEnemyAttacks(object) {
     object.state.attackMethodDelay += 1;
 }
 function handleMainEnemyLife(object) {
+    // TODO: CHANGE HOW RANDOM MOVEMENT IS CHOSEN
     const randomMoveMethod = () => {
         const methods = [
             () => {enemyMovementRandomConstant(object, 120, 50);},
             () => {enemyMovementRandomMax(object, 120, 50);},
             () => {enemyMovementHorizontally(mainEnemy);},
-            () => {enemyMovementRandomVaried(object, 50, ENEMY_CONFIG_SPEED);},
+            () => {enemyMovementRandomVaried(object, 50, SLIME_CONFIG_SPEED);},
         ];
         const methodIndex = Math.round(Math.random() * 3);
         return methods[methodIndex];
@@ -525,20 +530,20 @@ function handleMainEnemyLife(object) {
     object.state.moveMethodDelay += 1;
     object.state.moveMethod();
      
-    if (GAME_CONFIG_PLAYERPROJECTILES) {
+    if (GAMECONFIG_PLAYERPROJECTILES) {
         handleProjectileHit(object, playerProjectiles);
     } else {
         object.hp -= PLAYER_CONFIG_DAMAGE;
     }
     if (object.hp > 0) {
-        drawObject(object, ENEMY_TEXTURE, ENEMY_CONFIG_TEXTURE_OFFSET_X, ENEMY_CONFIG_TEXTURE_OFFSET_Y);
+        drawObject(object, SLIME_TEXTURE, SLIME_CONFIG_TEXTURE_OFFSET_X, SLIME_CONFIG_TEXTURE_OFFSET_Y);
         handleMainEnemyAttacks(object);
         drawHealthBar(
-            ENEMY_HEALTHBAR_X,
-            ENEMY_HEALTHBAR_Y,
-            ENEMY_HEALTHBAR_W,
-            ENEMY_HEALTHBAR_H,
-            ENEMY_CONFIG_HEALTH,
+            SLIME_HEALTHBAR_X,
+            SLIME_HEALTHBAR_Y,
+            SLIME_HEALTHBAR_W,
+            SLIME_HEALTHBAR_H,
+            SLIME_CONFIG_HEALTH,
             mainEnemy.hp,
         );
     } else {
@@ -568,7 +573,7 @@ function handleKeyPresses(keyspressed) {
 // end handling }}}
 function updateGame(renderTimestamp) {
     if (!lastTimestamp) lastTimestamp = renderTimestamp;
-    deltaTime = (renderTimestamp - lastTimestamp) / GAME_CONFIG_DELTATIME_MODIFIER;
+    deltaTime = (renderTimestamp - lastTimestamp) / GAMECONFIG_DELTATIME_MODIFIER;
     lastTimestamp = renderTimestamp;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     handleKeyPresses(inputKeysPressed);
