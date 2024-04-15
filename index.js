@@ -1,41 +1,4 @@
 // "use strict";
-// start preload-textures {{{
-const sourceImages = [
-    "bombastus_1280x960.png",
-    "bombastus_55x57.png",
-    "enemy_3200x2400.jpg",
-    "enemy_42x30.png",
-    "gigantus_3200x2400.jpg",
-    "gigantus_53x59.png",
-    "gigantus_64x48.png",
-    "gigantus_55x61.png",
-    "projectile_red_5x5.png",
-    "projectile_red_9x9.png",
-    "projectile_blue_9x9.png",
-    "projectile_green_9x9.png",
-];
-const gameTextures = {};
-Promise.all(sourceImages.map((image) => {
-    return new Promise((resolve, reject) => {
-        const texture = new Image();
-        texture.onload = () => resolve({
-            texture: texture,
-            name: image
-        });
-        texture.onerror = () => reject("Bitch I dunno the image didn't load");
-        texture.src = image;
-    });
-}))
-    .then((textures) => {
-        for (const texture of textures) {
-            gameTextures[texture.name] = texture.texture;
-        }
-        startGame();
-    })
-    .catch((error) => {
-        console.log(error);
-    });
-// end preload-textures }}}
 
 // start initialization {{{
 const deathscreendiv = document.getElementById("deathscreen");
@@ -95,14 +58,14 @@ const PLAYER_CONFIG_TEXTURE_OFFSET_Y = -4;
 const PLAYER_TEXTURE = "gigantus_55x61.png";
 const PLAYER_START_X = (canvas.width - PLAYER_CONFIG_WIDTH) / 2;
 const PLAYER_START_Y = (canvas.width - PLAYER_CONFIG_HEIGHT) / 2;
-const PLAYER_PROJECTILE_COUNT = 2;
+const PLAYER_PROJECTILE_COUNT = 1;
 const PLAYER_PROJECTILE_SPACING = 15;
 const PLAYER_PROJECTILE_WIDTH = 9;
 const PLAYER_PROJECTILE_HEIGHT = 9;
 const PLAYER_PROJECTILE_OFFSET_X = PLAYER_CONFIG_WIDTH / 2;
-const PLAYER_PROJECTILE_OFFSET_Y = -10;
+const PLAYER_PROJECTILE_OFFSET_Y = eval("-PLAYER_CONFIG_HEIGHT / 10;");
 const PLAYER_PROJECTILE_COOLDOWN = 4;
-const PLAYER_PROJECTILE_SPEED = 10;
+const PLAYER_PROJECTILE_SPEED = 5;
 const PLAYER_HEALTHBAR_X = canvas.width / 20;
 const PLAYER_HEALTHBAR_Y = canvas.height - canvas.height / 30;
 const PLAYER_HEALTHBAR_W = canvas.width / 4;
@@ -117,7 +80,7 @@ const SLIME_CONFIG_TEXTURE_WIDTH = 53;
 const SLIME_CONFIG_TEXTURE_HEIGHT = 59;
 const SLIME_CONFIG_TEXTURE_OFFSET_X = -3;
 const SLIME_CONFIG_TEXTURE_OFFSET_Y = -4;
-const SLIME_TEXTURE = "enemy_42x30.png";
+const SLIME_TEXTURE = "enemies_slime_42x30.png";
 const SLIME_START_X = (canvas.width - SLIME_CONFIG_WIDTH) / 2;
 const SLIME_START_Y = (canvas.width - SLIME_CONFIG_HEIGHT) / 10;
 const SLIME_PROJECTILE_WIDTH = 9;
@@ -553,6 +516,7 @@ function handleMainEnemyLife(object) {
 }
 function handleKeyPresses(keyspressed) {
     let movement = null;
+    // console.log(keyspressed);
     if (keyspressed.w || keyspressed.ArrowUp) {
         movement = player.yPos + -PLAYER_CONFIG_SPEED * deltaTime;
         if (movement >= 0) player.yPos = movement;
@@ -590,6 +554,7 @@ function updateGame(renderTimestamp) {
     handleMainEnemyLife(mainEnemy);
 
     drawObjectHitSplashText(objectHitSplashTexts);
+
     if (gameRunning) { window.requestAnimationFrame(updateGame); }
     else {
         gameAudio.pause();
